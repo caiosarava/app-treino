@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Dumbbell, 
   User, 
@@ -9,8 +9,6 @@ import {
   Loader2, 
   Scale, 
   CheckCircle2,
-  History,
-  Plus
 } from 'lucide-react';
 
 /**
@@ -19,14 +17,15 @@ import {
  * A exportação para o Hevy é otimizada via CSV.
  */
 
-const apiKey = ""; // A plataforma injeta a chave automaticamente
-
 const App = () => {
+  // --- Carrega API Key de variáveis de ambiente ---
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+
   // --- Estados do Formulário ---
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [workoutResult, setWorkoutResult] = useState(null);
-  const [error, setError] = useState(null);
+  const [workoutResult, setWorkoutResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     age: '',
@@ -35,7 +34,7 @@ const App = () => {
     gender: 'Masculino',
     activityLevel: 'Sedentário',
     objective: 'Hipertrofia',
-    conditions: [],
+    conditions: [] as string[],
     customCondition: ''
   });
 
@@ -46,7 +45,7 @@ const App = () => {
     return (formData.weight / (h * h)).toFixed(1);
   }, [formData.weight, formData.height]);
 
-  const getIMCCategory = (val) => {
+  const getIMCCategory = (val: number) => {
     if (val < 18.5) return { label: 'Abaixo do peso', color: 'text-blue-500' };
     if (val < 25) return { label: 'Peso normal', color: 'text-green-500' };
     if (val < 30) return { label: 'Sobrepeso', color: 'text-yellow-500' };
@@ -54,12 +53,12 @@ const App = () => {
   };
 
   // --- Handlers ---
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const toggleCondition = (cond) => {
+  const toggleCondition = (cond: string) => {
     setFormData(prev => ({
       ...prev,
       conditions: prev.conditions.includes(cond) 
@@ -70,6 +69,11 @@ const App = () => {
 
   // --- Integração com Gemini API ---
   const generateWorkout = async () => {
+    if (!apiKey) {
+      setError('Chave de API não configurada. Verifique as variáveis de ambiente.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     
@@ -154,7 +158,7 @@ Retorne apenas o JSON válido, pronto para ser convertido em arquivo exportável
           });
           if (response.ok) break;
         } catch (e) {
-          console.error("Erro na tentativa", retryCount);
+          console.error("Erro na tentativa", retryCount, e);
         }
         retryCount++;
         await new Promise(res => setTimeout(res, Math.pow(2, retryCount) * 1000));
@@ -183,8 +187,8 @@ Retorne apenas o JSON válido, pronto para ser convertido em arquivo exportável
     let csvContent = "Date,Workout Name,Exercise Name,Set Order,Weight,Reps,Distance,Seconds,Notes\n";
     const today = new Date().toISOString().split('T')[0];
 
-    workoutResult.days.forEach(day => {
-      day.exercises.forEach(ex => {
+    workoutResult.days.forEach((day: any) => {
+      day.exercises.forEach((ex: any) => {
         for (let i = 1; i <= (parseInt(ex.sets) || 3); i++) {
           csvContent += `${today},${day.day},${ex.name},${i},0,${ex.reps},0,0,${ex.notes}\n`;
         }
@@ -276,7 +280,7 @@ Retorne apenas o JSON válido, pronto para ser convertido em arquivo exportável
                     <p className="text-lg font-black text-blue-900">{imc}</p>
                   </div>
                 </div>
-                <div className={`font-bold px-3 py-1 rounded-full bg-white text-sm shadow-sm ${getIMCCategory(imc).color}`}>{getIMCCategory(imc).label}</div>
+                <div className={`font-bold px-3 py-1 rounded-full bg-white text-sm shadow-sm ${getIMCCategory(parseFloat(imc)).color}`}>{getIMCCategory(parseFloat(imc)).label}</div>
               </div>
             )}
 
@@ -355,13 +359,13 @@ Retorne apenas o JSON válido, pronto para ser convertido em arquivo exportável
               )}
 
               <div className="space-y-8">
-                {workoutResult.days.map((day, dIdx) => (
+                {workoutResult.days.map((day: any, dIdx: number) => (
                   <div key={dIdx} className="border border-slate-100 rounded-2xl overflow-hidden shadow-sm">
                     <div className="bg-slate-50 px-6 py-4 flex items-center justify-between border-b border-slate-100">
                       <h3 className="font-black text-blue-900 uppercase text-xs tracking-widest">{day.day} - {day.focus}</h3>
                     </div>
                     <div className="divide-y divide-slate-100">
-                      {day.exercises.map((ex, eIdx) => (
+                      {day.exercises.map((ex: any, eIdx: number) => (
                         <div key={eIdx} className="p-4 md:p-6 flex flex-col md:flex-row md:items-center gap-4 hover:bg-slate-50/50 transition-colors">
                           <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0">{eIdx + 1}</div>
                           <div className="flex-1">
