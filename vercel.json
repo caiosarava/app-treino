@@ -2,9 +2,5 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "devCommand": "npm run dev",
-  "framework": "vite",
-  "regions": ["sfo1"],
-  "env": {
-    "VITE_VERCEL_ENV": "@vercel/vite-builder"
-  }
+  "framework": "vite"
 }
