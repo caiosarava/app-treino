@@ -7,6 +7,9 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    rollupOptions: {
+      input: 'public/index.html',
+    },
   },
   server: {
     port: 3000,
